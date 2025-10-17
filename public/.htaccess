@@ -5,6 +5,10 @@
 
     RewriteEngine On
 
+    # Allow iframes from video player sources
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Content-Security-Policy "frame-src 'self' https://www.vidking.net https://vidsrc.me https://www.2embed.cc https://autoembed.cc https://*.vidking.net https://*.vidsrc.me https://*.2embed.cc https://*.autoembed.cc; frame-ancestors 'self'"
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

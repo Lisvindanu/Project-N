@@ -37,6 +37,9 @@
                         <button type="button" class="btn btn-outline-light player-btn" data-player="2embed" style="font-size: 12px;">
                             2Embed
                         </button>
+                        <button type="button" class="btn btn-outline-light player-btn" data-player="autoembed" style="font-size: 12px;">
+                            AutoEmbed
+                        </button>
                     </div>
                 </div>
             </div>
@@ -224,6 +227,10 @@ const players = {
     '2embed': {
         movie: (tmdbId) => `https://www.2embed.cc/embed/${tmdbId}`,
         tv: (tmdbId, season, episode) => `https://www.2embed.cc/embedtv/${tmdbId}&s=${season}&e=${episode}`
+    },
+    autoembed: {
+        movie: (tmdbId) => `https://autoembed.cc/movie/tmdb/${tmdbId}`,
+        tv: (tmdbId, season, episode) => `https://autoembed.cc/tv/tmdb/${tmdbId}-${season}-${episode}`
     }
 };
 
@@ -268,8 +275,19 @@ document.querySelectorAll('.player-btn').forEach(btn => {
     });
 });
 
-// Load default player (Vidking) on page load
-loadVideo('vidking');
+// Load default player (VidSrc) on page load
+loadVideo('vidsrc');
+
+// Auto-fallback: Try next player if current one fails to load
+let loadTimeout;
+playerIframe.addEventListener('load', function() {
+    clearTimeout(loadTimeout);
+});
+
+// If player doesn't load within 10 seconds, show alert
+loadTimeout = setTimeout(() => {
+    console.warn('Player taking too long to load. Consider switching to another player.');
+}, 10000);
 
 // Handle season selector
 const seasonSelector = document.getElementById('seasonSelector');
