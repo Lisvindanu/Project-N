@@ -28,11 +28,11 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <small class="text-muted">Select Player:</small>
                     <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-light player-btn active" data-player="vidking" style="font-size: 12px;">
-                            Vidking (Default)
+                        <button type="button" class="btn btn-outline-light player-btn" data-player="vidking" style="font-size: 12px;">
+                            Vidking
                         </button>
-                        <button type="button" class="btn btn-outline-light player-btn" data-player="vidsrc" style="font-size: 12px;">
-                            VidSrc
+                        <button type="button" class="btn btn-outline-light player-btn active" data-player="vidsrc" style="font-size: 12px;">
+                            VidSrc (Default)
                         </button>
                         <button type="button" class="btn btn-outline-light player-btn" data-player="2embed" style="font-size: 12px;">
                             2Embed
@@ -55,7 +55,8 @@
                         height="600"
                         frameborder="0"
                         allowfullscreen
-                        allow="autoplay; fullscreen"
+                        allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                        referrerpolicy="no-referrer-when-downgrade"
                         data-tmdb-id="{{ $video->tmdb_id }}"
                         data-type="{{ $video->type }}"
                         data-season="{{ $season }}"
