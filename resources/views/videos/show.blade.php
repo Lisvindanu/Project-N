@@ -1,16 +1,65 @@
 @extends('layouts.app')
 @section('title', $video->title)
+
+@push('styles')
+<style>
+.player-btn {
+    transition: all 0.3s ease;
+}
+.player-btn.active {
+    background-color: #e50914 !important;
+    border-color: #e50914 !important;
+    color: white !important;
+}
+.player-btn:hover:not(.active) {
+    background-color: #2f2f2f;
+    border-color: #e50914;
+    color: white;
+}
+</style>
+@endpush
+
 @section('content')
 <div class="row">
     <div class="col-md-9">
+        <!-- Player Selector -->
+        <div class="card mb-2" style="background: #181818; border: 1px solid #404040;">
+            <div class="card-body py-2 px-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <small class="text-muted">Select Player:</small>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-light player-btn active" data-player="vidking" style="font-size: 12px;">
+                            Vidking (Default)
+                        </button>
+                        <button type="button" class="btn btn-outline-light player-btn" data-player="vidsrc" style="font-size: 12px;">
+                            VidSrc
+                        </button>
+                        <button type="button" class="btn btn-outline-light player-btn" data-player="2embed" style="font-size: 12px;">
+                            2Embed
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Player -->
         <div class="card">
             <div class="card-body p-0">
                 @php
-                    $embedUrl = $video->type === 'tv'
-                        ? "https://www.vidking.net/embed/tv/{$video->tmdb_id}/1/1?color=e50914&autoPlay=true&nextEpisode=true&episodeSelector=true"
-                        : "https://www.vidking.net/embed/movie/{$video->tmdb_id}?color=e50914&autoPlay=true";
+                    $season = $video->type === 'tv' ? 1 : null;
+                    $episode = $video->type === 'tv' ? 1 : null;
                 @endphp
-                <iframe id="videoPlayer" src="{{ $embedUrl }}" width="100%" height="600" frameborder="0" allowfullscreen></iframe>
+                <iframe id="videoPlayer"
+                        src=""
+                        width="100%"
+                        height="600"
+                        frameborder="0"
+                        allowfullscreen
+                        allow="autoplay; fullscreen"
+                        data-tmdb-id="{{ $video->tmdb_id }}"
+                        data-type="{{ $video->type }}"
+                        data-season="{{ $season }}"
+                        data-episode="{{ $episode }}"></iframe>
             </div>
         </div>
 
@@ -161,6 +210,66 @@
 
 @push('scripts')
 <script>
+// Player URLs configuration
+const players = {
+    vidking: {
+        movie: (tmdbId) => `https://www.vidking.net/embed/movie/${tmdbId}?color=e50914&autoPlay=true`,
+        tv: (tmdbId, season, episode) => `https://www.vidking.net/embed/tv/${tmdbId}/${season}/${episode}?color=e50914&autoPlay=true&nextEpisode=true&episodeSelector=true`
+    },
+    vidsrc: {
+        movie: (tmdbId) => `https://vidsrc.me/embed/movie?tmdb=${tmdbId}`,
+        tv: (tmdbId, season, episode) => `https://vidsrc.me/embed/tv?tmdb=${tmdbId}&season=${season}&episode=${episode}`
+    },
+    '2embed': {
+        movie: (tmdbId) => `https://www.2embed.cc/embed/${tmdbId}`,
+        tv: (tmdbId, season, episode) => `https://www.2embed.cc/embedtv/${tmdbId}&s=${season}&e=${episode}`
+    }
+};
+
+// Current player state
+let currentPlayer = 'vidking';
+
+// Get player iframe
+const playerIframe = document.getElementById('videoPlayer');
+const tmdbId = playerIframe.dataset.tmdbId;
+const videoType = playerIframe.dataset.type;
+
+// Function to load video
+function loadVideo(player, season = null, episode = null) {
+    let url;
+    if (videoType === 'tv' && season && episode) {
+        url = players[player].tv(tmdbId, season, episode);
+    } else if (videoType === 'tv') {
+        url = players[player].tv(tmdbId, playerIframe.dataset.season, playerIframe.dataset.episode);
+    } else {
+        url = players[player].movie(tmdbId);
+    }
+
+    playerIframe.src = url;
+
+    // Update iframe data attributes if season/episode provided
+    if (season && episode) {
+        playerIframe.dataset.season = season;
+        playerIframe.dataset.episode = episode;
+    }
+}
+
+// Handle player selection
+document.querySelectorAll('.player-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // Update active state
+        document.querySelectorAll('.player-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        // Load new player
+        currentPlayer = this.dataset.player;
+        loadVideo(currentPlayer);
+    });
+});
+
+// Load default player (Vidking) on page load
+loadVideo('vidking');
+
 // Handle season selector
 const seasonSelector = document.getElementById('seasonSelector');
 if (seasonSelector) {
@@ -183,10 +292,9 @@ document.querySelectorAll('.episode-link').forEach(link => {
         e.preventDefault();
         const season = this.dataset.season;
         const episode = this.dataset.episode;
-        const tmdbId = this.dataset.tmdbId;
 
-        const newUrl = `https://www.vidking.net/embed/tv/${tmdbId}/${season}/${episode}?color=e50914&autoPlay=true&nextEpisode=true&episodeSelector=true`;
-        document.getElementById('videoPlayer').src = newUrl;
+        // Load episode with current player
+        loadVideo(currentPlayer, season, episode);
 
         // Remove active class from all episodes
         document.querySelectorAll('.episode-link').forEach(l => {
